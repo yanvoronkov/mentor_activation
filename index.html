@@ -388,11 +388,11 @@
 
 			.level-header.level-2,
 			.referral-card.level-2 {
-				margin-left: 20px;
+				margin-left: 0;
 			}
 
 			.referral-stats {
-				grid-template-columns: 1fr;
+				grid-template-columns: repeat(2, 1fr);
 			}
 		}
 	</style>
@@ -403,8 +403,8 @@
 		<div class="header">
 			<h1>🌟 Реферальная Система</h1>
 			<div class="search-container">
-				<input type="text" id="userIdInput" class="search-input" placeholder="Введите ID пользователя">
-				<button id="searchBtn" class="search-btn">Показать дерево</button>
+				<input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск по имени, нику, ID...">
+				<button id="loadAllBtn" class="search-btn">Загрузить всех</button>
 			</div>
 		</div>
 
@@ -708,8 +708,14 @@
 			showElement('statsContainer');
 		}
 
+		// Глобальная переменная для хранения всех данных
+		let allReferralsData = [];
+
 		// Отображение дерева рефералов
 		function displayData(data) {
+			// Сохраняем все данные для поиска
+			allReferralsData = data;
+
 			displayStats(data);
 
 			const level1Data = data.filter(r => r[0] === 1);
@@ -779,18 +785,6 @@
 							<div class="stat-item-value">@${inviterNick || '-'}</div>
 						</div>
 						<div class="stat-item">
-							<div class="stat-item-label">Всего рефералов</div>
-							<div class="stat-item-value">${formatValue(totalRefs)}</div>
-						</div>
-						<div class="stat-item">
-							<div class="stat-item-label">1 уровень</div>
-							<div class="stat-item-value">${formatValue(level1)}</div>
-						</div>
-						<div class="stat-item">
-							<div class="stat-item-label">2 уровень</div>
-							<div class="stat-item-value">${formatValue(level2)}</div>
-						</div>
-						<div class="stat-item">
 							<div class="stat-item-label">Бесплатные забеги</div>
 							<div class="stat-item-value">${formatValue(freeRuns)}</div>
 						</div>
@@ -855,26 +849,120 @@
 			showElement('treeContainer');
 		}
 
+		// Функция поиска по всем полям
+		function searchReferrals(query) {
+			if (!query || query.trim() === '') {
+				// Если поиск пустой, показываем все данные
+				displayFilteredData(allReferralsData);
+				return;
+			}
+
+			const searchTerm = query.toLowerCase().trim();
+
+			// Фильтруем данные по всем полям
+			const filtered = allReferralsData.filter(referral => {
+				const [level, date, nick, name, inviterNick, freeRuns, bonuses, payouts, level1, level2, earned, withdrawn, balance, totalRefs] = referral;
+
+				// Поиск по: нику, имени, пригласителю
+				return (
+					(nick && nick.toLowerCase().includes(searchTerm)) ||
+					(name && name.toLowerCase().includes(searchTerm)) ||
+					(inviterNick && inviterNick.toLowerCase().includes(searchTerm)) ||
+					(date && date.includes(searchTerm))
+				);
+			});
+
+			console.log(`Найдено ${filtered.length} рефералов по запросу: "${query}"`);
+
+			if (filtered.length === 0) {
+				hideElement('statsContainer');
+				document.getElementById('treeContainer').innerHTML = `
+					<div class="empty-state">
+						<div class="empty-icon">🔍</div>
+						<div class="empty-text">Ничего не найдено по запросу "${query}"</div>
+					</div>
+				`;
+				showElement('treeContainer');
+				return;
+			}
+
+			displayFilteredData(filtered);
+		}
+
+		// Отображение отфильтрованных данных (без сохранения в allReferralsData)
+		function displayFilteredData(data) {
+			displayStats(data);
+
+			const level1Data = data.filter(r => r[0] === 1);
+			const level2Data = data.filter(r => r[0] === 2);
+
+			let html = '';
+
+			// Уровень 1
+			if (level1Data.length > 0) {
+				html += `
+					<div class="level-header" onclick="toggleLevel(1)">
+						<span class="level-icon">▼</span>
+						<span class="level-title">Уровень 1 - Прямые партнеры</span>
+						<span class="level-count">${level1Data.length}</span>
+					</div>
+					<div id="level-1-content">
+						${level1Data.map(referral => createReferralCard(referral, 1)).join('')}
+					</div>
+				`;
+			}
+
+			// Уровень 2
+			if (level2Data.length > 0) {
+				html += `
+					<div class="level-header level-2" onclick="toggleLevel(2)">
+						<span class="level-icon">▼</span>
+						<span class="level-title">Уровень 2 - Партнеры партнеров</span>
+						<span class="level-count">${level2Data.length}</span>
+					</div>
+					<div id="level-2-content">
+						${level2Data.map(referral => createReferralCard(referral, 2)).join('')}
+					</div>
+				`;
+			}
+
+			document.getElementById('treeContainer').innerHTML = html;
+			showElement('treeContainer');
+		}
+
 		// Обработчики событий
-		document.getElementById('searchBtn').addEventListener('click', () => {
-			const userId = document.getElementById('userIdInput').value.trim();
-			loadData(userId);
+		document.getElementById('loadAllBtn').addEventListener('click', () => {
+			// Очищаем поле поиска
+			document.getElementById('searchInput').value = '';
+			// Загружаем данные для основного пользователя
+			loadData('227290741');
 		});
 
-		document.getElementById('userIdInput').addEventListener('keypress', (e) => {
+		document.getElementById('searchInput').addEventListener('input', (e) => {
+			const query = e.target.value;
+			// Выполняем поиск только если данные уже загружены
+			if (allReferralsData.length > 0) {
+				searchReferrals(query);
+			}
+		});
+
+		document.getElementById('searchInput').addEventListener('keypress', (e) => {
 			if (e.key === 'Enter') {
-				const userId = document.getElementById('userIdInput').value.trim();
-				loadData(userId);
+				const query = e.target.value;
+				if (allReferralsData.length > 0) {
+					searchReferrals(query);
+				} else {
+					// Если данные не загружены, загружаем их
+					loadData('227290741');
+				}
 			}
 		});
 
 		// Загрузка при старте страницы
 		window.addEventListener('load', () => {
 			const urlId = getIdFromURL();
-			if (urlId) {
-				document.getElementById('userIdInput').value = urlId;
-				loadData(urlId);
-			}
+			const userId = urlId || '227290741'; // По умолчанию загружаем для ID 227290741
+			loadData(userId);
 		});
 	</script>
 </body>
