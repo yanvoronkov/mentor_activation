@@ -1,0 +1,5 @@
+referal_id,referalName,referal_nickname,referal_level,client_level,referer_id,referer_nickname,referer_name,reg_date,lev1,lev2,free_sprints,total_bonus_points,total_payment,total_earned_lev1,total_earned_lev2,total_earned,total_withdrawal,balance,totalReferals,mountly_bonus_points,monthly_referrals,annual_bonus_points,Insp_result,Org_result,Prot_result,Inn_result,name_max_result,name_second_result,Записался на консультацию
+227290741,Марина Талько,mltalko,2,0,1,mltalko,Марина Талько,2025-10-22 14:12:54,2,1,,,,,,,,,3,,,,,,,,,,
+227886583,Генадій Куцан,genadiykutsan,1,,227290741,mltalko,Марина Талько,30.12.1899 0:00:00,0,0,0,0,,,,,,0,0,,,,,,,,,,
+227193871,Ян Воронков,yanvoronkov,2,2,227290741,mltalko,Марина Талько,2025-10-21 16:30:31,1,0,,,,,,,,,1,,,,,,,,,,
+227783140,Ян Воронков,yangrus,1,2,227193871,yanvoronkov,Ян Воронков,2025-10-27 12:17:00,0,0,,,,,,,,,0,,,,,,,,,,
