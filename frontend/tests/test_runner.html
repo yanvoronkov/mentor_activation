@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Runner</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .details {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Unit Tests</h1>
+    <div id="test-results"></div>
+
+    <!-- App Scripts -->
+    <script src="../config.js"></script>
+    <script src="../api.js"></script>
+
+    <!-- Tests -->
+    <script src="logic.test.js"></script>
+</body>
+
+</html>

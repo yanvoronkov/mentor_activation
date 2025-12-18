@@ -10,20 +10,31 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    // Пытаемся получить данные из кеша
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get("referral_data_v1"); // Ключ кеша
+    
+    if (cached != null) {
+      return ContentService
+        .createTextOutput(cached)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
     // Получаем все данные из таблицы
     var allData = getReferralData();
+    var jsonOutput = JSON.stringify(allData);
     
-    // Находим строку пользователя, чтобы убедиться, что он существует (опционально)
-    // В данном случае мы просто возвращаем все данные, как того требует фронтенд (он сам фильтрует)
-    // Но если нужно возвращать только связанные данные, логику можно усложнить.
-    // Судя по index.html, фронтенд ожидает массив массивов (строки таблицы).
-    
-    // ВОЗВРАЩАЕМ ВЕСЬ МАССИВ ДАННЫХ (без заголовков, или с ними - проверим фронтенд)
-    // Фронтенд: const headers = rawData[0]; const rows = rawData.slice(1);
-    // Значит, нужно вернуть все данные как есть.
+    // Сохраняем в кеш на 10 минут (600 секунд)
+    // Максимальный размер значения кеша - 100КБ. Если данных много, можно кешировать частями или использовать другие методы.
+    try {
+      cache.put("referral_data_v1", jsonOutput, 600);
+    } catch (e) {
+      // Если данные слишком большие для кеша, просто игнорируем ошибку сохранения
+      Logger.log("Cache error: " + e.toString()); 
+    }
     
     return ContentService
-      .createTextOutput(JSON.stringify(allData))
+      .createTextOutput(jsonOutput)
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {
