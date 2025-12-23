@@ -1,4 +1,4 @@
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzTJj8xynOBhhp8ZQNX4lOIHgYAmZTR4g5_wE13V-cEgnfGkGW4TbFcB7qIRV63XBCV/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbzSXaR7IrUON8d8ZGTAlXVys1dkfTPm5eOfGe3XlbQ9jLz2m6vOcnHr0XD80gMCNZ6t/exec',
     DEFAULT_USER_ID: '227290741'
 };

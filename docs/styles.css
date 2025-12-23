@@ -385,3 +385,307 @@ h1 {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
+
+/* Tabs */
+.tabs-container {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.tab-btn {
+	padding: 10px 25px;
+	border: none;
+	background: rgba(255, 255, 255, 0.4);
+	border-radius: 12px;
+	cursor: pointer;
+	font-weight: 600;
+	color: #444;
+	transition: all 0.3s ease;
+	font-size: 1rem;
+}
+
+.tab-btn:hover {
+	background: rgba(255, 255, 255, 0.7);
+}
+
+.tab-btn.active {
+	background: white;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+	color: #667eea;
+}
+
+/* Report Table */
+.report-table-wrapper {
+	width: 100%;
+	overflow-x: auto;
+	background: white;
+	border-radius: 15px;
+	padding: 10px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.report-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 600px;
+}
+
+.report-table th,
+.report-table td {
+	padding: 15px;
+	text-align: left;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.report-table th {
+	font-weight: 600;
+	color: #888;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.report-table tr:last-child td {
+	border-bottom: none;
+}
+
+.report-controls {
+	margin-bottom: 20px;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.date-filter {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	background: white;
+	padding: 10px 20px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.date-filter input {
+	border: 1px solid #eee;
+	padding: 5px 10px;
+	border-radius: 5px;
+	background: #fcfcfc;
+}
+
+/* Utility Classes for Report */
+.font-medium {
+	font-weight: 500;
+}
+
+.font-bold {
+	font-weight: 700;
+}
+
+.text-success {
+	color: #10b981;
+}
+
+.text-muted {
+	color: #999;
+}
+
+.text-xs {
+	font-size: 0.75rem;
+}
+
+.text-center {
+	text-align: center;
+}
+
+.p-4 {
+	padding: 1.5rem;
+}
+
+.badge {
+	padding: 4px 8px;
+	border-radius: 6px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: white;
+}
+
+.badge.level-1 {
+	background-color: #667eea;
+}
+
+.badge.level-2 {
+	background-color: #f5576c;
+}
+
+.badge.level-3 {
+	background-color: #8b5cf6;
+}
+
+.badge.level-4 {
+	background-color: #06b6d4;
+}
+
+.badge.level-5 {
+	background-color: #ec4899;
+}
+
+.user-cell {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Referer Info Block */
+.referer-info {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 15px 20px;
+	border-radius: 12px;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+	animation: fadeIn 0.5s ease-out;
+}
+
+.referer-info span {
+	font-size: 0.95rem;
+}
+
+.referer-info strong {
+	font-weight: 600;
+	font-size: 1.05rem;
+}
+
+.referer-info a {
+	color: white;
+	text-decoration: underline;
+	font-weight: 600;
+	transition: opacity 0.2s ease;
+}
+
+.referer-info a:hover {
+	opacity: 0.8;
+}
+
+/* Bonus badges */
+.badge.bonus-l1 {
+	background-color: #10b981;
+}
+
+.badge.bonus-l2 {
+	background-color: #f59e0b;
+}
+
+.badge.bonus-l3 {
+	background-color: #8b5cf6;
+}
+
+@media (max-width: 768px) {
+	h1 {
+		font-size: 1.8rem;
+	}
+
+	.header {
+		padding: 20px 15px;
+	}
+
+	.search-container {
+		flex-direction: column;
+	}
+
+	.search-input {
+		max-width: 100%;
+	}
+
+	.stats-container {
+		gap: 10px;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	}
+
+	.stat-card {
+		padding: 12px 15px;
+	}
+
+	.stat-label {
+		font-size: 0.75rem;
+	}
+
+	.stat-value {
+		font-size: 1.4rem;
+	}
+
+	.referer-info {
+		padding: 12px 15px;
+		font-size: 0.85rem;
+	}
+
+	.referer-info strong {
+		font-size: 0.95rem;
+	}
+
+	.level-header.level-2,
+	.referral-card.level-2 {
+		margin-left: 0;
+	}
+
+	.referral-card {
+		padding: 15px;
+	}
+
+	.referral-stats {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+	}
+
+	.stat-item {
+		padding: 10px;
+	}
+
+	.stat-item-label {
+		font-size: 0.7rem;
+	}
+
+	.stat-item-value {
+		font-size: 0.85rem;
+	}
+
+	.user-icon {
+		width: 40px;
+		height: 40px;
+		font-size: 1rem;
+	}
+
+	.user-name {
+		font-size: 0.95rem;
+	}
+
+	.user-nick {
+		font-size: 0.8rem;
+	}
+
+	.user-date {
+		font-size: 0.75rem;
+	}
+
+	.report-table-wrapper {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.report-table {
+		font-size: 0.85rem;
+	}
+
+	.report-table th,
+	.report-table td {
+		padding: 10px 8px;
+		white-space: nowrap;
+	}
+
+	.tree-container {
+		padding: 5px;
+	}
+}

@@ -19,8 +19,46 @@
 			</div>
 		</div>
 
+		<!-- Tab Navigation -->
+		<div class="tabs-container">
+			<button id="tabStructure" class="tab-btn active">Структура</button>
+			<button id="tabReport" class="tab-btn">Отчет по бонусам</button>
+		</div>
+
 		<div id="statsContainer" class="stats-container hidden"></div>
 		<div id="treeContainer" class="tree-container hidden"></div>
+
+		<!-- Report Container -->
+		<div id="reportContainer" class="report-container hidden">
+			<div class="report-controls">
+				<div class="date-filter">
+					<label for="reportMonth">Выбрать месяц:</label>
+					<input type="month" id="reportMonth">
+				</div>
+			</div>
+
+			<div class="report-table-wrapper">
+				<table class="report-table">
+					<thead>
+						<tr>
+							<th>Ур. реф.</th>
+							<th>Ур. пок.</th>
+							<th>Вид б.</th>
+							<th>Баллы (Д1)</th>
+							<th>Доход ($)</th>
+							<th>Покупатель</th>
+							<th>Платеж ($)</th>
+							<th>%</th>
+							<th>Дата</th>
+						</tr>
+					</thead>
+					<tbody id="reportTableBody">
+						<!-- Rows will be injected here -->
+					</tbody>
+				</table>
+			</div>
+		</div>
+
 		<div id="loadingContainer" class="loading hidden">
 			<div class="spinner"></div>
 			<div>Загрузка данных...</div>
@@ -30,6 +68,7 @@
 	<!-- Scripts -->
 	<script src="config.js"></script>
 	<script src="api.js"></script>
+	<script src="report.js"></script>
 	<script src="app.js"></script>
 </body>
 

@@ -70,11 +70,12 @@ const API = {
             lev2: headers.indexOf('lev2'),
             free_sprints: headers.indexOf('free_sprints'),
             total_bonus_points: headers.indexOf('total_bonus_points'),
+            balance_bonus_points: headers.indexOf('balance_bonus_points'),
             total_payment: headers.indexOf('total_payment'),
             total_earned: headers.indexOf('total_earned'),
             total_withdrawal: headers.indexOf('total_withdrawal'),
             balance: headers.indexOf('balance'),
-            totalReferals: headers.indexOf('totalReferals')
+            total_referals: headers.indexOf('total_referals')
         };
 
         const processedData = [];
@@ -128,16 +129,29 @@ const API = {
                     row[colMap.referal_nickname] || '',             // [2] Nickname
                     row[colMap.referalName] || '',                  // [3] Name
                     row[colMap.referer_nickname] || '',             // [4] Inviter Nick
-                    toNum(row[colMap.free_sprints]),                // [5] Free Sprints
-                    toNum(row[colMap.total_bonus_points]),          // [6] Bonuses
-                    toNum(row[colMap.total_payment]),               // [7] Payouts
-                    toNum(row[colMap.lev1]),                        // [8] Level 1 count
-                    toNum(row[colMap.lev2]),                        // [9] Level 2 count
-                    toNum(row[colMap.total_earned]),                // [10] Total Earned
-                    toNum(row[colMap.total_withdrawal]),            // [11] Withdrawn
-                    toNum(row[colMap.balance]),                     // [12] Balance
-                    toNum(row[colMap.totalReferals])                // [13] Total Referrals
+                    row[colMap.referer_name] || '',                 // [5] Inviter Name
+                    toNum(row[colMap.free_sprints]),                // [6] Free Sprints
+                    toNum(row[colMap.balance_bonus_points]),        // [7] Balance Bonus Points
+                    toNum(row[colMap.total_payment]),               // [8] Payouts
+                    toNum(row[colMap.lev1]),                        // [9] Level 1 count
+                    toNum(row[colMap.lev2]),                        // [10] Level 2 count
+                    toNum(row[colMap.total_earned]),                // [11] Total Earned
+                    toNum(row[colMap.total_withdrawal]),            // [12] Withdrawn
+                    toNum(row[colMap.balance]),                     // [13] Balance
+                    toNum(row[colMap.total_referals]),              // [14] Total Referrals
+                    referalId                                       // [15] Referal ID (Hidden)
                 ];
+
+                // Debug: проверяем значение total_referals
+                if (row[colMap.referal_nickname] === 'yangrus') {
+                    console.log('🔍 DEBUG yangrus:', {
+                        nickname: row[colMap.referal_nickname],
+                        totalReferalsIndex: colMap.total_referals,
+                        totalReferalsValue: row[colMap.total_referals],
+                        totalReferalsValueParsed: toNum(row[colMap.total_referals]),
+                        formattedRow14: formattedRow[14]
+                    });
+                }
 
                 processedData.push(formattedRow);
             }
@@ -148,9 +162,74 @@ const API = {
     },
 
     /**
+     * Find and extract user's personal data from raw API data
+     * @param {Array[]} rawData - Raw data from API including headers
+     * @param {string} userId - User ID to find
+     * @returns {Object} User's personal data
+     */
+    findUserData(rawData, userId) {
+        if (!Array.isArray(rawData) || rawData.length < 2) {
+            return null;
+        }
+
+        const headers = rawData[0];
+        const rows = rawData.slice(1);
+        const userIdStr = String(userId);
+
+        // Map column names to indices
+        const colMap = {
+            referal_id: headers.indexOf('referal_id'),
+            referalName: headers.indexOf('referalName'),
+            referal_nickname: headers.indexOf('referal_nickname'),
+            referer_id: headers.indexOf('referer_id'),
+            referer_nickname: headers.indexOf('referer_nickname'),
+            referer_name: headers.indexOf('referer_name'),
+            lev1: headers.indexOf('lev1'),
+            lev2: headers.indexOf('lev2'),
+            balance_bonus_points: headers.indexOf('balance_bonus_points'),
+            total_earned: headers.indexOf('total_earned'),
+            total_withdrawal: headers.indexOf('total_withdrawal'),
+            balance: headers.indexOf('balance')
+        };
+
+        // Find user's row
+        const userRow = rows.find(row => String(row[colMap.referal_id]) === userIdStr);
+
+        if (!userRow) {
+            console.warn('User row not found for ID:', userId);
+            return null;
+        }
+
+        // Helper to safe parse number
+        const toNum = (val) => {
+            if (val === '' || val === null || val === undefined) return 0;
+            const num = parseFloat(val);
+            return isNaN(num) ? 0 : num;
+        };
+
+        const userData = {
+            userId: userIdStr,
+            name: userRow[colMap.referalName] || '',
+            nickname: userRow[colMap.referal_nickname] || '',
+            refererName: userRow[colMap.referer_name] || '',
+            refererNick: userRow[colMap.referer_nickname] || '',
+            level1Count: toNum(userRow[colMap.lev1]),
+            level2Count: toNum(userRow[colMap.lev2]),
+            bonusPoints: toNum(userRow[colMap.balance_bonus_points]),
+            totalEarned: toNum(userRow[colMap.total_earned]),
+            totalWithdrawal: toNum(userRow[colMap.total_withdrawal]),
+            balance: toNum(userRow[colMap.balance])
+        };
+
+        console.log(`📊 Личные данные пользователя ID=${userId}:`, userData);
+
+        return userData;
+    },
+
+    /**
      * Fetch and process data from server
      * @param {string} userId 
-     * @returns {Promise<Array[]>}
+     * @returns {Promise<{userData: Object, referrals: Array[]}>}
      */
     async loadData(userId) {
         if (!userId) {
@@ -179,9 +258,49 @@ const API = {
         }
 
         if (!Array.isArray(data) || data.length === 0) {
-            return [];
+            return { userData: null, referrals: [] };
         }
 
-        return this.processData(data, userId);
+        // Extract user's personal data
+        const userData = this.findUserData(data, userId);
+
+        // Process referrals list
+        const referrals = this.processData(data, userId);
+
+        return { userData, referrals };
+    },
+
+    /**
+     * Fetch bonus transactions from server
+     * @param {string} userId - User ID to fetch transactions for
+     * @returns {Promise<Array[]>}
+     */
+    async loadBonusTransactions(userId) {
+        if (!userId) {
+            throw new Error('User ID is required for loading bonus transactions');
+        }
+
+        const url = `${CONFIG.API_URL}?type=bonusTransactions&id=${userId}`;
+        console.log('Loading bonus transactions from:', url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('JSON Parse Error:', e);
+            throw new Error('Server response is not valid JSON');
+        }
+
+        return data;
     }
 };
