@@ -1,33 +1,89 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ ID И ДАТЫ ДЛЯ НОВЫХ ТРАНЗАКЦИЙ
+ * ═══════════════════════════════════════════════════════════════════════
+ * Версия: 2.0
+ * Дата: 22.12.2025
+ * 
+ * НАЗНАЧЕНИЕ:
+ * - Автоматически генерирует уникальный transaction_id для новых записей
+ * - Устанавливает дату и время транзакции
+ * - Запускается через masterTrigger при изменении таблицы payments
+ * 
+ * ЛОГИКА:
+ * - Проверяет наличие buyer_id (колонка C) - если есть, значит данные от API
+ * - Если transaction_id (колонка A) пустой - генерирует новый
+ * - Timestamp гарантированно уникальный (миллисекунды + счетчик)
+ */
+
 function autoIdAndDate() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("payments");
-  if (!sheet) return; // Если листа нет, выходим
-
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return; // Если данных нет, выходим
-
-  // Берем все данные (Колонки A, B, C)
-  // 1 = колонка A, 3 = количество колонок (A, B, C)
-  var range = sheet.getRange(2, 1, lastRow - 1, 3);
-  var values = range.getValues();
-  
-  var isChanged = false;
-  var now = new Date(); // Текущее время для всех новых строк
-  var timestamp = now.getTime(); // Таймстэмп (число)
-
-  for (var i = 0; i < values.length; i++) {
-    var idCell = values[i][0];   // Колонка A
-    var refData = values[i][2];  // Колонка C (данные от бота)
-
-    // Если ID нет, а данные от бота есть
-    if (idCell == "" && refData != "") {
-      values[i][0] = timestamp + i; // A: Таймстэмп (+i чтобы не было дублей)
-      values[i][1] = now;           // B: Нормальная дата и время
-      isChanged = true;
+  try {
+    const startTime = new Date();
+    Logger.log("🚀 СТАРТ генерации ID и даты | " + startTime.toLocaleTimeString());
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName("payments");
+    
+    if (!sheet) {
+      Logger.log("❌ Лист 'payments' не найден");
+      return;
     }
-  }
 
-  // Записываем обратно только если что-то меняли
-  if (isChanged) {
-    range.setValues(values);
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      Logger.log("ℹ️ Таблица payments пуста");
+      return;
+    }
+
+    // Загружаем все 8 колонок payments
+    const range = sheet.getRange(2, 1, lastRow - 1, 8);
+    const values = range.getValues();
+    
+    let processedCount = 0;
+    const baseTimestamp = new Date().getTime();
+    const timezone = Session.getScriptTimeZone();
+
+    for (let i = 0; i < values.length; i++) {
+      const transactionId = values[i][0];  // A: transaction_id
+      const buyerId = values[i][2];        // C: buyer_id (данные от API/бота)
+      
+      // Если есть buyer_id, но нет transaction_id - это новая запись
+      if (!transactionId && buyerId) {
+        // Генерируем уникальный ID (timestamp + индекс строки)
+        // Это гарантирует уникальность даже при массовой вставке
+        values[i][0] = baseTimestamp + i;
+        
+        // Устанавливаем дату и время в читаемом формате
+        const now = new Date();
+        values[i][1] = Utilities.formatDate(now, timezone, "dd.MM.yyyy HH:mm:ss");
+        
+        // Статус для новых транзакций пустой (будет установлен при обработке)
+        // values[i][7] остается как есть (пустой или уже установленный)
+        
+        processedCount++;
+        
+        Logger.log(`✅ Создан ID для buyer ${buyerId}: ${values[i][0]}`);
+      }
+    }
+
+    // Сохраняем изменения только если что-то обработано
+    if (processedCount > 0) {
+      range.setValues(values);
+      Logger.log(`💾 Сохранено изменений: ${processedCount}`);
+    } else {
+      Logger.log("ℹ️ Новых записей не найдено");
+    }
+    
+    const endTime = new Date();
+    const duration = (endTime - startTime) / 1000;
+    Logger.log(`✅ ЗАВЕРШЕНО за ${duration.toFixed(2)} сек | Обработано: ${processedCount}`);
+    
+  } catch (error) {
+    Logger.log("═══════════════════════════════════════════════════════");
+    Logger.log("❌ КРИТИЧЕСКАЯ ОШИБКА в autoIdAndDate:");
+    Logger.log("   " + error.message);
+    Logger.log("   Stack: " + error.stack);
+    Logger.log("═══════════════════════════════════════════════════════");
+    throw error;
   }
 }

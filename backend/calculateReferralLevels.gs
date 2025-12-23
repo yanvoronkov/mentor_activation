@@ -6,12 +6,12 @@ function calculateReferralLevels() {
   }
   const data = sheet.getDataRange().getValues();
   
-  // Обновленная структура столбцов:
+  // Обновленная структура столбцов (после добавления полей для баллов):
   // Столбец A (индекс 0) - referral_id (ID текущего пользователя)
   // Столбец F (индекс 5) - referer_id (ID пригласителя)
   // Столбец J (индекс 9) - lev1 (количество рефералов уровня 1)
   // Столбец K (индекс 10) - lev2 (количество рефералов уровня 2)
-  // Столбец T (индекс 19) - totalReferals (общее количество рефералов по всем уровням)
+  // Столбец U (индекс 21 - колонка 21) - totalReferals (общее количество рефералов)
   
   const updates = [];
 
@@ -52,9 +52,9 @@ function calculateReferralLevels() {
   
   // Записываем все значения одним пакетом для оптимизации
   for (const update of updates) {
-    sheet.getRange(update.row, 10).setValue(update.lev1); // Столбец J для lev1
-    sheet.getRange(update.row, 11).setValue(update.lev2); // Столбец K для lev2
-    sheet.getRange(update.row, 20).setValue(update.total); // Столбец T для totalReferals
+    sheet.getRange(update.row, 10).setValue(update.lev1);  // Столбец J (10) для lev1
+    sheet.getRange(update.row, 11).setValue(update.lev2);  // Столбец K (11) для lev2
+    sheet.getRange(update.row, 12).setValue(update.total); // Столбец L (12) для total_referals
   }
   
   Logger.log('Подсчет уровней рефералов завершен');

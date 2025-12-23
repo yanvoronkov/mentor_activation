@@ -2,24 +2,22 @@
  * ═══════════════════════════════════════════════════════════════════════
  * MLM БОНУСНАЯ СИСТЕМА - Автоматический расчет по триггеру
  * ═══════════════════════════════════════════════════════════════════════
- * Версия: 2.1 (Триггерная версия)
- * Дата: 12.12.2025
+ * Версия: 3.1 (Bonus Transactions + Payment Status)
+ * Дата: 22.12.2025
  * 
  * НАЗНАЧЕНИЕ:
- * - Автоматический расчет бонусов при добавлении данных через API
- * - Работает по триггеру onChange (при изменении листа payments)
+ * - Автоматический расчет бонусов при добавлении платежа через API
+ * - Запись бонусов в отдельную таблицу bonus_transactions
+ * - Работает через masterTrigger (не напрямую)
  * - Без UI/меню - только логирование
- * - Оптимизирован для быстрой обработки
  * 
  * СТРУКТУРА:
- * - calculateMlmBonuses() - основная функция для триггера
- * - onEdit(e) - опциональная функция для ручного редактирования
+ * - calculateMlmBonuses() - основная функция расчета
+ * - writeBonusTransaction() - запись бонуса (в отдельном файле)
  * 
- * УСТАНОВКА ТРИГГЕРА:
- * Apps Script → Триггеры → Добавить триггер:
- *   - Функция: calculateMlmBonuses
- *   - Тип события: Из таблицы
- *   - Тип события: При изменении
+ * ВАЖНО:
+ * Эта функция вызывается из masterTrigger.gs → runPaymentsPipeline()
+ * Напрямую триггер НЕ устанавливается!
  */
 
 /**
@@ -88,33 +86,71 @@ function calculateMlmBonuses() {
       return;
     }
 
-    var payRange = sheetPay.getRange(2, 1, lastRowPay - 1, 18);
+    // НОВАЯ СТРУКТУРА payments: 8 колонок (A-H)
+    // A: transaction_id, B: transaction_time, C: buyer_id, D: buyer_name,
+    // E: product_id, F: payment_amount, G: payment_bonus_points, H: status
+    var payRange = sheetPay.getRange(2, 1, lastRowPay - 1, 8);
     var payValues = payRange.getValues();
     var processedCount = 0;
     var skippedCount = 0;
     var errorCount = 0;
+    var bonusesWritten = 0;
+
+    // Загрузка таблицы bonus_transactions для проверки уже обработанных
+    var sheetBonus = ss.getSheetByName("bonus_transactions");
+    if (!sheetBonus) {
+      Logger.log("❌ ОШИБКА: Таблица 'bonus_transactions' не найдена");
+      return;
+    }
+    
+    var lastRowBonus = sheetBonus.getLastRow();
+    var processedTransactions = {};
+    
+    if (lastRowBonus >= 2) {
+      var bonusData = sheetBonus.getRange(2, 2, lastRowBonus - 1, 1).getValues();
+      for (var b = 0; b < bonusData.length; b++) {
+        var txId = String(bonusData[b][0]).trim();
+        if (txId) processedTransactions[txId] = true;
+      }
+    }
+    
+    Logger.log("📋 Уже обработано транзакций: " + Object.keys(processedTransactions).length);
 
     for (var i = 0; i < payValues.length; i++) {
       var rowNum = i + 2;
       
       try {
-        // Проверка: есть transaction_id И пусто referer_L1
+        // Проверка: есть transaction_id
         var transactionId = String(payValues[i][0]).trim();
-        var refererL1Filled = String(payValues[i][7]).trim();
         
         if (!transactionId || transactionId === "") continue;
-        if (refererL1Filled !== "") {
+        
+        // Проверка статуса в payments (новое!)
+        var paymentStatus = String(payValues[i][7]).trim(); // H: status
+        
+        // Пропускаем уже обработанные или отмененные
+        if (paymentStatus === "processed" || paymentStatus === "cancelled") {
+          skippedCount++;
+          continue;
+        }
+        
+        // Проверка: уже обработана (есть в bonus_transactions)?
+        if (processedTransactions[transactionId]) {
+          // Устанавливаем статус если еще не установлен
+          if (!paymentStatus) {
+            payValues[i][7] = "processed";
+          }
           skippedCount++;
           continue;
         }
         
         // ──────────────────────────────────────────────────────────────
-        // ИЗВЛЕЧЕНИЕ ДАННЫХ
+        // ИЗВЛЕЧЕНИЕ ДАННЫХ (НОВЫЕ ИНДЕКСЫ)
         // ──────────────────────────────────────────────────────────────
-        var buyerId = String(payValues[i][2]).trim();
-        var clientLevel = parseInt(payValues[i][4]) || 1;
-        var productId = parseInt(payValues[i][5]) || 1;
-        var amount = parseFloat(payValues[i][6]) || 0;
+        var buyerId = String(payValues[i][2]).trim();       // C: buyer_id
+        var buyerName = String(payValues[i][3]).trim();     // D: buyer_name
+        var productId = parseInt(payValues[i][4]) || 1;     // E: product_id
+        var amount = parseFloat(payValues[i][5]) || 0;      // F: payment_amount
         
         // Валидация
         if (!buyerId || buyerId === "") {
@@ -137,18 +173,17 @@ function calculateMlmBonuses() {
           continue;
         }
         
+        var clientLevel = buyerNode.cLevel;  // Уровень покупателя
         var productInfo = productRules[productId] || { type: "other", points: 0 };
         var upline1Id = buyerNode.uplineId;
+        
+        Logger.log("🔍 Строка " + rowNum + ": TX=" + transactionId + ", Buyer=" + buyerName + " (L" + clientLevel + "), Amount=" + amount + "₽");
         
         // ══════════════════════════════════════════════════════════════
         // РАСЧЕТ БОНУСОВ L1
         // ══════════════════════════════════════════════════════════════
         if (upline1Id && usersMap[upline1Id]) {
           var upline1 = usersMap[upline1Id];
-          
-          payValues[i][7] = upline1Id;
-          payValues[i][8] = upline1.name;
-          payValues[i][9] = upline1.pLevel;
 
           var moneyL1 = 0;
           var pointsL1 = 0;
@@ -169,13 +204,31 @@ function calculateMlmBonuses() {
             
             moneyL1 = amount * rateL1;
           }
-          
-          payValues[i][10] = moneyL1;
-          payValues[i][11] = pointsL1;
-          payValues[i][16] = rateL1;
 
           Logger.log("✅ Строка " + rowNum + ": L1=" + upline1.name + 
                      " | " + moneyL1 + "₽ (" + (rateL1*100) + "%) + " + pointsL1 + " б.");
+          
+          // ────────────────────────────────────────────────────────────
+          // ЗАПИСЬ БОНУСА L1 В bonus_transactions
+          // ────────────────────────────────────────────────────────────
+          var bonusL1Saved = writeBonusTransaction({
+            transactionId: transactionId,
+            referal_id: upline1Id,
+            referal_name: upline1.name,
+            referal_level: upline1.pLevel,   // Уровень партнера
+            bonus_level: "L1",                // Тип бонуса
+            bonus_amount: moneyL1,
+            bonus_points: pointsL1,
+            bonus_percent: rateL1,
+            buyer_id: buyerId,
+            buyer_name: buyerName,
+            buyer_level: clientLevel,
+            product_id: productId,
+            payment_amount: amount,
+            status: "pending"
+          });
+          
+          if (bonusL1Saved) bonusesWritten++;
           
           // ════════════════════════════════════════════════════════════
           // РАСЧЕТ БОНУСОВ L2
@@ -183,10 +236,6 @@ function calculateMlmBonuses() {
           if (clientLevel == 1 && upline1.uplineId && usersMap[upline1.uplineId]) {
             var upline2Id = upline1.uplineId;
             var upline2 = usersMap[upline2Id];
-            
-            payValues[i][12] = upline2Id;
-            payValues[i][13] = upline2.name;
-            payValues[i][14] = upline2.pLevel;
             
             var moneyL2 = 0;
             var rateL2 = 0;
@@ -196,14 +245,36 @@ function calculateMlmBonuses() {
               moneyL2 = amount * rateL2;
             }
             
-            payValues[i][15] = moneyL2;
-            payValues[i][17] = rateL2;
-            
             if (moneyL2 > 0) {
               Logger.log("✅ Строка " + rowNum + ": L2=" + upline2.name + 
                          " | " + moneyL2 + "₽ (" + (rateL2*100) + "%)");
+              
+              // ──────────────────────────────────────────────────────────
+              // ЗАПИСЬ БОНУСА L2 В bonus_transactions
+              // ──────────────────────────────────────────────────────────
+              var bonusL2Saved = writeBonusTransaction({
+                transactionId: transactionId,
+                referal_id: upline2Id,
+                referal_name: upline2.name,
+                referal_level: upline2.pLevel,  // Уровень партнера
+                bonus_level: "L2",               // Тип бонуса
+                bonus_amount: moneyL2,
+                bonus_points: 0,                 // Баллы только на L1
+                bonus_percent: rateL2,
+                buyer_id: buyerId,
+                buyer_name: buyerName,
+                buyer_level: clientLevel,
+                product_id: productId,
+                payment_amount: amount,
+                status: "pending"
+              });
+              
+              if (bonusL2Saved) bonusesWritten++;
             }
           }
+          
+          // Устанавливаем статус "processed" в payments
+          payValues[i][7] = "processed";
           
           processedCount++;
         }
@@ -215,10 +286,12 @@ function calculateMlmBonuses() {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // СОХРАНЕНИЕ ИЗМЕНЕНИЙ
+    // СОХРАНЕНИЕ ИЗМЕНЕНИЙ В PAYMENTS (СТАТУСЫ)
     // ═══════════════════════════════════════════════════════════════════
-    if (processedCount > 0) {
+    // Сохраняем обновленные статусы обратно в таблицу payments
+    if (processedCount > 0 || skippedCount > 0) {
       payRange.setValues(payValues);
+      Logger.log("💾 Статусы в payments обновлены");
     }
     
     // ═══════════════════════════════════════════════════════════════════
@@ -230,6 +303,7 @@ function calculateMlmBonuses() {
     Logger.log("──────────────────────────────────────────────────────");
     Logger.log("📊 СТАТИСТИКА:");
     Logger.log("   ✅ Обработано: " + processedCount);
+    Logger.log("   💾 Бонусов записано: " + bonusesWritten);
     Logger.log("   ⏭️  Пропущено: " + skippedCount);
     Logger.log("   ⚠️  Ошибок: " + errorCount);
     Logger.log("   ⏱️  Время: " + duration.toFixed(2) + " сек");
