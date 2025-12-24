@@ -57,8 +57,16 @@ function autoIdAndDate() {
         const now = new Date();
         values[i][1] = Utilities.formatDate(now, timezone, "dd.MM.yyyy HH:mm:ss");
         
-        // Статус для новых транзакций пустой (будет установлен при обработке)
-        // values[i][7] остается как есть (пустой или уже установленный)
+        // Автоматическая установка статуса для покупок за баллы
+        const paymentAmount = parseFloat(values[i][5]) || 0;      // F: payment_amount
+        const bonusPointsSpent = parseFloat(values[i][6]) || 0;   // G: payment_bonus_points
+        
+        if (paymentAmount <= 0 && bonusPointsSpent > 0) {
+          // Покупка за баллы - статус completed
+          values[i][7] = "completed";
+          Logger.log(`  📌 Статус: completed (покупка за ${bonusPointsSpent} баллов)`);
+        }
+        // Для денежных покупок статус остается пустым
         
         processedCount++;
         

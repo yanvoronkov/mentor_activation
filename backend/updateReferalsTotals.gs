@@ -190,7 +190,7 @@ function updateReferalsTotals() {
         const bonusPointsSpent = parseFloat(paymentsData[j][6]) || 0; // G: payment_bonus_points
         const paymentStatus = String(paymentsData[j][7]).trim();    // H: status
         
-        // Пропускаем отмененные платежи
+        // Пропускаем только отмененные платежи
         if (paymentStatus === "cancelled") {
           continue;
         }
@@ -199,13 +199,16 @@ function updateReferalsTotals() {
           // ──────────────────────────────────────────────────────────
           // 3. TOTAL_PAYMENT
           // Сумма payment_amount, где buyer_id == referal_id
-          // (только активные транзакции, без cancelled)
+          // Покупки за баллы (completed) НЕ учитываются
           // ──────────────────────────────────────────────────────────
-          totalPayment += paymentAmount;
+          if (paymentStatus !== "completed") {
+            totalPayment += paymentAmount;
+          }
           
           // ──────────────────────────────────────────────────────────
           // 4. TOTAL_BONUS_POINTS_SPENT
           // Сумма payment_bonus_points, где buyer_id == referal_id
+          // Учитываются ВСЕ покупки (в т.ч. completed)
           // ──────────────────────────────────────────────────────────
           totalBonusPointsSpent += bonusPointsSpent;
         }
