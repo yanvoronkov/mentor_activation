@@ -62,7 +62,7 @@ const ReportManager = {
             console.error('❌ Failed to load bonus report:', error);
             const tbody = document.getElementById('reportTableBody');
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">Ошибка загрузки данных: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Ошибка загрузки данных: ${error.message}</td></tr>`;
             }
         } finally {
             UIManager.showLoading(false);
@@ -190,9 +190,24 @@ const ReportManager = {
             const msg = monthInput && monthInput.value
                 ? 'Нет данных за выбранный период'
                 : 'Нет данных для этого пользователя';
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">${msg}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 20px;">${msg}</td></tr>`;
+
+            // Reset summary
+            this.updateSummary(0, 0);
             return;
         }
+
+        // Calculate totals
+        let totalIncome = 0;
+        let totalPoints = 0;
+
+        filtered.forEach(t => {
+            totalIncome += t.bonusAmount;
+            totalPoints += t.bonusPoints;
+        });
+
+        // Update summary cards
+        this.updateSummary(totalIncome, totalPoints);
 
         filtered.forEach(t => {
             const tr = document.createElement('tr');
@@ -217,18 +232,45 @@ const ReportManager = {
             }
             const bonusBadge = t.bonusLevel ? `<span class="${bonusClass}">${t.bonusLevel}</span>` : '-';
 
+            // Определяем значок статуса
+            let statusBadge = '';
+            if (t.status) {
+                const statusLower = String(t.status).toLowerCase();
+                let statusClass = 'badge';
+                let statusText = t.status;
+
+                if (statusLower === 'pending') {
+                    statusClass = 'badge status-pending';
+                    statusText = 'Ожидает';
+                } else if (statusLower === 'completed') {
+                    statusClass = 'badge status-completed';
+                    statusText = 'Выплачен';
+                } else if (statusLower === 'cancelled') {
+                    statusClass = 'badge status-cancelled';
+                    statusText = 'Отменён';
+                } else if (statusLower === 'reversed') {
+                    statusClass = 'badge status-reversed';
+                    statusText = 'Возврат';
+                }
+
+                statusBadge = `<span class="${statusClass}">${statusText}</span>`;
+            } else {
+                statusBadge = '-';
+            }
+
             tr.innerHTML = `
-                <td>${refLevelBadge}</td>
-                <td>${buyerLevelBadge}</td>
+                <td class="text-muted text-xs">${this.formatDate(t.date)}</td>
                 <td>${bonusBadge}</td>
-                <td class="font-medium">${t.bonusPoints}</td>
                 <td class="text-success font-bold">${this.formatCurrency(t.bonusAmount)}</td>
+                <td class="font-medium">${t.bonusPoints}</td>
                 <td>
                     <div class="font-medium">${t.buyerName || 'Не указано'}</div>
                 </td>
                 <td>${this.formatCurrency(t.paymentAmount)}</td>
                 <td>${this.formatPercent(t.bonusPercent)}</td>
-                <td class="text-muted text-xs">${this.formatDate(t.date)}</td>
+                <td>${refLevelBadge}</td>
+                <td>${buyerLevelBadge}</td>
+                <td>${statusBadge}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -281,5 +323,18 @@ const ReportManager = {
     formatPercent(val) {
         // Assuming val is 0.05 for 5%
         return (val < 1) ? (val * 100).toFixed(0) + '%' : val + '%';
+    },
+
+    updateSummary(totalIncome, totalPoints) {
+        const incomeEl = document.getElementById('reportTotalIncome');
+        const pointsEl = document.getElementById('reportTotalPoints');
+
+        if (incomeEl) {
+            incomeEl.textContent = this.formatCurrency(totalIncome);
+        }
+
+        if (pointsEl) {
+            pointsEl.textContent = totalPoints.toFixed(0);
+        }
     }
 };

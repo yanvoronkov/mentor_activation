@@ -30,10 +30,22 @@
 
 		<!-- Report Container -->
 		<div id="reportContainer" class="report-container hidden">
-			<div class="report-controls">
+			<div class="report-header">
 				<div class="date-filter">
 					<label for="reportMonth">Выбрать месяц:</label>
 					<input type="month" id="reportMonth">
+				</div>
+
+				<!-- Summary Cards -->
+				<div class="report-summary">
+					<div class="summary-card">
+						<div class="summary-label">Общий доход</div>
+						<div class="summary-value" id="reportTotalIncome">$0.00</div>
+					</div>
+					<div class="summary-card">
+						<div class="summary-label">Всего баллов</div>
+						<div class="summary-value" id="reportTotalPoints">0</div>
+					</div>
 				</div>
 			</div>
 
@@ -41,15 +53,16 @@
 				<table class="report-table">
 					<thead>
 						<tr>
-							<th>Ур. реф.</th>
-							<th>Ур. пок.</th>
-							<th>Вид б.</th>
-							<th>Баллы (Д1)</th>
-							<th>Доход ($)</th>
-							<th>Покупатель</th>
-							<th>Платеж ($)</th>
-							<th>%</th>
 							<th>Дата</th>
+							<th>Вид б.</th>
+							<th>Доход($)</th>
+							<th>ББ(L1)</th>
+							<th>Покупатель</th>
+							<th>Платеж($)</th>
+							<th>%</th>
+							<th>Ур.реф.</th>
+							<th>Ур.пок.</th>
+							<th>Статус</th>
 						</tr>
 					</thead>
 					<tbody id="reportTableBody">
