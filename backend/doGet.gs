@@ -43,9 +43,9 @@ function doGet(e) {
     var allData = getReferralData();
     var jsonOutput = JSON.stringify(allData);
     
-    // Сохраняем в кеш на 10 минут (600 секунд)
+    // Сохраняем в кеш на 2 минуты (120 секунд)
     try {
-      cache.put("referral_data_v1", jsonOutput, 600);
+      cache.put("referral_data_v1", jsonOutput, 120);
     } catch (e) {
       Logger.log("Cache error: " + e.toString()); 
     }
@@ -62,7 +62,7 @@ function doGet(e) {
 }
 
 function getReferralData() {
-  const spreadsheetId = '1C9t0s9sCwXlnAmeloKDo2La8FncDGBux_TNG3zF3QNs';
+  const spreadsheetId = '1vcJMNA4I-rOkhVdfmHon9ePjGuxWuhWnz2RyBvXxrP4';
   const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName('referals');
   // Получаем все данные, включая заголовки
   const data = sheet.getDataRange().getValues();
@@ -70,7 +70,7 @@ function getReferralData() {
 }
 
 function getPaymentsData() {
-  const spreadsheetId = '1C9t0s9sCwXlnAmeloKDo2La8FncDGBux_TNG3zF3QNs';
+  const spreadsheetId = '1vcJMNA4I-rOkhVdfmHon9ePjGuxWuhWnz2RyBvXxrP4';
   const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName('payments');
   if (!sheet) {
     return {error: "Sheet 'payments' not found"}; 
@@ -81,7 +81,7 @@ function getPaymentsData() {
 }
 
 function getBonusTransactionsData() {
-  const spreadsheetId = '1C9t0s9sCwXlnAmeloKDo2La8FncDGBux_TNG3zF3QNs';
+  const spreadsheetId = '1vcJMNA4I-rOkhVdfmHon9ePjGuxWuhWnz2RyBvXxrP4';
   const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName('bonus_transactions');
   if (!sheet) {
     return {error: "Sheet 'bonus_transactions' not found"}; 

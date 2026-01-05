@@ -19,3 +19,11 @@ Desktop.ini
 *.log
 npm-debug.log*
 
+# Migration backups
+*.backup
+*.bak
+*.old
+
+# Temporary files
+*.tmp
+*.temp

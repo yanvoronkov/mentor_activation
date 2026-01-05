@@ -11,7 +11,7 @@ function doGet(e) {
 }
 
 function getReferralData() {
-  const spreadsheetId = '1C9t0s9sCwXlnAmeloKDo2La8FncDGBux_TNG3zF3QNs';
+  const spreadsheetId = '1vcJMNA4I-rOkhVdfmHon9ePjGuxWuhWnz2RyBvXxrP4';
   const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName('referals'); // совпадает с названием вашего листа!
   const data = sheet.getDataRange().getValues();
   return data;
