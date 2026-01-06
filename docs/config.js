@@ -1,4 +1,4 @@
 const CONFIG = {
-    API_URL: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLhbT2qSFq_AoZJSJpTMXYT_FivzZfb6o5VVxy5h4N2qNX0wOUOqHd7xsqJseqeBXEJL2fKAVJS-2OY7dlmYMUK01LosMHK0_gJ-YUWrsHsDAbAAsWB5UpVYkRQmkRaaZFQ-0PdmO8h3fvJQ9xiBrgfc8axk4Z3XuqldSkiyrebm_YMMw7mJpyskac2P4NV59-5tF1eCl_MLgfzymqkukekCYlJEl_IBv8nw4LzKlWMTGeGIniebZYIMZuqEJ-SFRSr6t91R3fAvQEyKvflnWLYa_ap0GQ&lib=MHABwHeZlSpuejxYBnE9akk6INLp29u7W',
+    API_URL: 'https://script.google.com/macros/s/AKfycbwwx07tr8_rkrKpbc4_2PGC8V_Vlx1v93b9c8-rwquhqLycN0JhuJjsDfJR5FsYKDGp/exec',
     DEFAULT_USER_ID: '234112267'
 };
