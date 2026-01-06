@@ -27,3 +27,7 @@ npm-debug.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Data exports
+*.csv
+backend/*.csv
